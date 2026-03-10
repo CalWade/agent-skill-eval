@@ -1,0 +1,93 @@
+skill: feishu-contacts
+
+cases:
+  - id: TC-CT-01
+    title: 缓存命中
+    instruction: "韦贺文的 open_id 是什么"
+    preconditions:
+      - "韦贺文的 open_id 已缓存"
+    min_steps: 0
+    category: happy_path
+    pass_criteria:
+      - type: output_contains
+        text: "ou_"
+      - type: step_count_le
+        value: 1
+
+  - id: TC-CT-02
+    title: 通讯录按姓名查找
+    instruction: "帮我查一下刘伟的 open_id"
+    preconditions:
+      - "刘伟不在缓存中"
+      - "Bot 可用范围覆盖全员"
+    min_steps: 2
+    category: happy_path
+    pass_criteria:
+      - type: api_called
+        endpoint: "GET /contact/v3"
+      - type: output_contains
+        text: "ou_"
+
+  - id: TC-CT-03
+    title: 重名处理
+    instruction: "查一下王伟的信息"
+    preconditions:
+      - "通讯录中有多个王伟"
+    min_steps: 2
+    category: edge_case
+    pass_criteria:
+      - type: output_contains
+        text: "部门"
+      - type: output_not_contains
+        text: "已找到王伟"
+
+  - id: TC-CT-04
+    title: 查找不存在的人
+    instruction: "查一下马斯克的 open_id"
+    preconditions: []
+    min_steps: 2
+    category: edge_case
+    pass_criteria:
+      - type: output_contains
+        text: "未找到"
+      - type: output_not_contains
+        text: "ou_"
+
+  - id: TC-CT-05
+    title: 群成员列表查找
+    instruction: "这个群里有谁，列出来"
+    preconditions:
+      - "Bot 在一个群中"
+    min_steps: 2
+    category: happy_path
+    pass_criteria:
+      - type: api_called
+        endpoint: "GET /im/v1/chats"
+      - type: output_contains
+        text: "ou_"
+
+  - id: TC-CT-06
+    title: 查找后自动缓存验证
+    instruction: "刘伟的 open_id"
+    preconditions:
+      - "TC-CT-02 已执行成功"
+    min_steps: 0
+    category: happy_path
+    pass_criteria:
+      - type: step_count_le
+        value: 1
+      - type: output_contains
+        text: "ou_"
+
+  - id: TC-CT-07
+    title: Bot 可见范围受限
+    instruction: "查一下市场部张丽的信息"
+    preconditions:
+      - "Bot 可用范围未设为全员"
+    min_steps: 2
+    category: edge_case
+    pass_criteria:
+      - type: output_not_contains
+        text: "ou_"
+      - type: output_contains
+        text: "范围"

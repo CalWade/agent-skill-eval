@@ -1,0 +1,28 @@
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.deepvcode/
+.vscode/
+.idea/
+*.swp
+*~
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# 敏感配置
+.env
+
+# 测试结果（每人不同，自动生成）
+results/*.json
+results/*.md
+!results/.gitkeep

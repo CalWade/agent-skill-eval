@@ -1,0 +1,123 @@
+skill: feishu-send-message
+
+cases:
+  - id: TC-SM-01
+    title: 纯文本消息 - 已知联系人
+    instruction: "给韦贺文发一条消息：明天 10 点开会"
+    preconditions:
+      - "韦贺文的 open_id 已缓存"
+    min_steps: 2
+    category: happy_path
+    pass_criteria:
+      - type: semantic_success
+        description: "消息成功发送给了韦贺文"
+        keywords: ["成功", "✅", "已发送", "送达", "发送成功"]
+        regex: "(发送|消息).*(成功|完成|送达|已发)"
+      - type: output_contains_any
+        texts: ["韦贺文", "om_"]
+
+  - id: TC-SM-02
+    title: 纯文本消息 - 未知联系人
+    instruction: "给李佩琪发消息：项目进度如何"
+    preconditions:
+      - "李佩琪的 open_id 不在缓存中"
+    min_steps: 3
+    category: happy_path
+    pass_criteria:
+      - type: api_called
+        endpoint: "GET /contact/v3"
+      - type: api_called
+        endpoint: "POST /im/v1/messages"
+      - type: response_contains
+        field: "code"
+        value: 0
+
+  - id: TC-SM-03
+    title: 发送富文本
+    instruction: "给韦贺文发一条富文本消息，标题是'周报提醒'，内容包含一个链接到 https://example.com"
+    preconditions:
+      - "open_id 已知"
+    min_steps: 2
+    category: happy_path
+    pass_criteria:
+      - type: api_called
+        endpoint: "POST /im/v1/messages"
+      - type: request_body_contains
+        field: "msg_type"
+        value: "post"
+
+  - id: TC-SM-04
+    title: 发送消息到群聊
+    instruction: "在项目群里发一条消息：今天下午 3 点站会"
+    preconditions:
+      - "Bot 在该群中"
+    min_steps: 2
+    category: happy_path
+    pass_criteria:
+      - type: request_body_contains
+        field: "receive_id_type"
+        value: "chat_id"
+      - type: response_contains
+        field: "code"
+        value: 0
+
+  - id: TC-SM-05
+    title: 权限不足时的自动恢复
+    instruction: "给韦贺文发消息：测试"
+    preconditions:
+      - "未开通 im:message:send_as_bot"
+    min_steps: 4
+    category: error_recovery
+    pass_criteria:
+      - type: api_called
+        endpoint: "POST /im/v1/messages"
+        expect_error: 99991672
+      - type: output_contains
+        text: "权限"
+      - type: response_contains
+        field: "code"
+        value: 0
+
+  - id: TC-SM-06
+    title: 230013 自动恢复
+    instruction: "给一个从没联系过的同事张三发消息：你好"
+    preconditions:
+      - "张三不在 Bot 可用范围内"
+    min_steps: 4
+    category: error_recovery
+    pass_criteria:
+      - type: api_called
+        endpoint: "PATCH /application/v6/applications"
+      - type: response_contains
+        field: "code"
+        value: 0
+
+  - id: TC-SM-07
+    title: 发送图片
+    instruction: "把 /tmp/test.png 发给韦贺文"
+    preconditions:
+      - "本地有 /tmp/test.png"
+    min_steps: 3
+    category: happy_path
+    pass_criteria:
+      - type: api_called
+        endpoint: "POST /im/v1/images"
+      - type: api_called
+        endpoint: "POST /im/v1/messages"
+      - type: request_body_contains
+        field: "msg_type"
+        value: "image"
+
+  - id: TC-SM-08
+    title: 模糊指令
+    instruction: "跟小韦说一声下午别忘了"
+    preconditions:
+      - "缓存中有韦贺文"
+    min_steps: 2
+    category: edge_case
+    pass_criteria:
+      - type: api_called
+        endpoint: "POST /im/v1/messages"
+      - type: response_contains
+        field: "code"
+        value: 0
